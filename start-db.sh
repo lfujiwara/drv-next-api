@@ -1,0 +1,1 @@
+docker run -p "5432:5432" --name drv-next-db -e POSTGRES_DB=drv_db -e POSTGRES_PASSWORD=pgpass -d postgres:13-alpine
