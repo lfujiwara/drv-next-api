@@ -38,7 +38,7 @@ namespace drv_next_api.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult<IEnumerable<Customer>>> Post(CreateCustomerDto customerData)
+        public async Task<ActionResult<Customer>> Post(CreateCustomerDto customerData)
         {
             try
             {

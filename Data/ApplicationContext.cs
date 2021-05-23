@@ -10,6 +10,7 @@ namespace drv_next_api.Data
         }
 
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<Trip> Trips { get; set; }
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -18,6 +19,10 @@ namespace drv_next_api.Data
             var customer = b.Entity<Customer>();
             customer.HasKey(c => c.Id);
             customer.HasIndex(c => c.PhoneNumber).IsUnique();
+
+            var trip = b.Entity<Trip>();
+            trip.HasKey(t => t.Id);
+            trip.HasOne(t => t.Customer);
         }
     }
 }

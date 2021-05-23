@@ -14,6 +14,8 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using drv_next_api.Data;
 using drv_next_api.Services.Customers;
+using drv_next_api.Services;
+using drv_next_api.Services.Trips;
 
 namespace drv_next_api
 {
@@ -30,6 +32,7 @@ namespace drv_next_api
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.AddAutoMapper(typeof(MapperProfile));
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -42,6 +45,7 @@ namespace drv_next_api
             });
             services.AddTransient<ApplicationContext>();
             services.AddTransient<CustomersService>();
+            services.AddTransient<TripsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
