@@ -35,7 +35,6 @@ namespace drv_next_api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddAutoMapper(typeof(MapperProfile));
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -86,6 +85,7 @@ namespace drv_next_api
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS")).AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
 
             app.UseAuthentication();
             app.UseAuthorization();
