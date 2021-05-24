@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using drv_next_api.Controllers.Models;
 using drv_next_api.Data;
 using drv_next_api.Models;
+using drv_next_api.Services.Customers.Exceptions;
 using drv_next_api.Services.Exceptions;
 using drv_next_api.Services.Trips;
 using drv_next_api.Services.Trips.Dto;
@@ -89,6 +90,10 @@ namespace drv_next_api.Controllers
             catch (ServiceValidationException ex)
             {
                 return new BadRequestObjectResult(ex.result);
+            }
+            catch (CustomerNotFoundException)
+            {
+                return new NotFoundResult();
             }
         }
 
