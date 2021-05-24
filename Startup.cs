@@ -16,6 +16,10 @@ using drv_next_api.Data;
 using drv_next_api.Services.Customers;
 using drv_next_api.Services;
 using drv_next_api.Services.Trips;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace drv_next_api
 {
@@ -40,12 +44,33 @@ namespace drv_next_api
             });
             services.AddDbContext<ApplicationContext>(opts =>
             {
-                opts.UseSqlServer(Configuration.GetValue<string>("CONNECTION_STRING"));
+                opts.UseSqlServer(Configuration.GetValue<string>("CONNECTION_STRING") ?? Environment.GetEnvironmentVariable("CONNECTION_STRING"));
                 // opts.UseInMemoryDatabase("Default");
             });
             services.AddTransient<ApplicationContext>();
             services.AddTransient<CustomersService>();
             services.AddTransient<TripsService>();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.Authority = Environment.GetEnvironmentVariable("ASPNETCORE_AUTH0_AUTHORITY");
+                options.Audience = Environment.GetEnvironmentVariable("ASPNETCORE_AUTH0_AUDIENCE");
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = ClaimTypes.NameIdentifier
+                };
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +87,7 @@ namespace drv_next_api
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
