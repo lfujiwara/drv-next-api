@@ -40,7 +40,7 @@ namespace drv_next_api
             });
             services.AddDbContext<ApplicationContext>(opts =>
             {
-                opts.UseNpgsql(Configuration.GetValue<string>("PG_CONNECTION_STRING"));
+                opts.UseSqlServer(Configuration.GetValue<string>("CONNECTION_STRING"));
                 // opts.UseInMemoryDatabase("Default");
             });
             services.AddTransient<ApplicationContext>();
