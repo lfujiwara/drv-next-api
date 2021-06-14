@@ -43,7 +43,7 @@ namespace drv_next_api
             });
             services.AddDbContext<ApplicationContext>(opts =>
             {
-                opts.UseSqlServer(Configuration.GetValue<string>("CONNECTION_STRING") ?? Environment.GetEnvironmentVariable("CONNECTION_STRING"));
+                opts.UseSqlServer(Configuration.GetValue<string>("ASPNETCORE_CONNECTION_STRING") ?? Environment.GetEnvironmentVariable("ASPNETCORE_CONNECTION_STRING"));
                 // opts.UseInMemoryDatabase("Default");
             });
             services.AddTransient<ApplicationContext>();
@@ -82,13 +82,13 @@ namespace drv_next_api
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "drv_next_api v1"));
             }
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseRouting();
             app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS")).AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
 
             app.UseAuthentication();
-            app.UseAuthorization();
+            // app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
