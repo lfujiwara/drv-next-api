@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Security.Claims;
 using drv_next_api.Data;
 using drv_next_api.QueryServices.Trips;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Converters;
 
 namespace drv_next_api
 {
@@ -31,7 +33,14 @@ namespace drv_next_api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAutoMapper(typeof(MapperProfile));
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.Converters.Add(new IsoDateTimeConverter
+                {
+                    DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",
+                    DateTimeStyles = DateTimeStyles.AdjustToUniversal
+                });
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo {Title = "drv_next_api", Version = "v1"});
