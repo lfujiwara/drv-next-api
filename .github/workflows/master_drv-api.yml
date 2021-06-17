@@ -53,5 +53,5 @@ jobs:
       with:
         app-name: 'drv-api'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_a0e8b7c0780749a1be97ad98e0252936 }}
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_961f6164908e4a0e82362376850a8522 }}
         package: .
