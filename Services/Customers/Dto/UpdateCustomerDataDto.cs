@@ -4,5 +4,6 @@ namespace drv_next_api.Services.Customers.Dto
     {
         public int CustomerId { get; init; }
         public string Name { get; init; }
+        public string PhoneNumber { get; init; }
     }
 }

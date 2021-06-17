@@ -99,12 +99,17 @@ namespace drv_next_api.Controllers
         {
             try
             {
-                await _service.UpdateCustomerData(new UpdateCustomerDataDto {CustomerId = customerId, Name = dto.Name});
+                await _service.UpdateCustomerData(new UpdateCustomerDataDto
+                    {CustomerId = customerId, Name = dto.Name, PhoneNumber = dto.PhoneNumber});
                 return new OkResult();
             }
             catch (ServiceValidationException ex)
             {
                 return new BadRequestObjectResult(ex.result);
+            }
+            catch (CustomerDuplicatePhoneNumberException)
+            {
+                return new ConflictResult();
             }
             catch (CustomerNotFoundException)
             {

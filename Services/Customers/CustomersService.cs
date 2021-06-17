@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using drv_next_api.Models;
 using drv_next_api.Data;
@@ -61,6 +62,7 @@ namespace drv_next_api.Services.Customers
 
         /// <exception cref="ServiceValidationException"></exception>
         /// <exception cref="CustomerNotFoundException"></exception>
+        /// <exception cref="CustomerDuplicatePhoneNumberException"></exception>
         public async Task UpdateCustomerData(UpdateCustomerDataDto dto)
         {
             var vResult = await updateCustomerDataDtoValidator.ValidateAsync(dto);
@@ -71,6 +73,12 @@ namespace drv_next_api.Services.Customers
             if (entity == null) throw new CustomerNotFoundException();
 
             if (dto.Name != null) entity.Name = dto.Name;
+            if (dto.PhoneNumber != null && dto.PhoneNumber != entity.PhoneNumber)
+            {
+                if (await _ctx.Customers.Where(c => c.PhoneNumber == dto.PhoneNumber).AnyAsync())
+                    throw new CustomerDuplicatePhoneNumberException();
+                entity.PhoneNumber = dto.PhoneNumber;
+            }
 
             await _ctx.SaveChangesAsync();
         }
