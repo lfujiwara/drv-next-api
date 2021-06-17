@@ -82,8 +82,10 @@ namespace drv_next_api
             app.UseHttpsRedirection();
 
             app.UseRouting();
-            app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS"))
-                .AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
+
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_CORS") != null)
+                app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS"))
+                    .AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
 
             app.UseAuthentication();
             app.UseAuthorization();
