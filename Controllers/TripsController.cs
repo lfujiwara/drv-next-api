@@ -1,10 +1,11 @@
 using System;
-using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
 using drv_next_api.Controllers.Models;
 using drv_next_api.Data;
 using drv_next_api.Models;
+using drv_next_api.QueryServices.Trips;
+using drv_next_api.QueryServices.Trips.Dto;
 using drv_next_api.Services.Customers.Exceptions;
 using drv_next_api.Services.Exceptions;
 using drv_next_api.Services.Trips;
@@ -20,62 +21,83 @@ namespace drv_next_api.Controllers
     [Route("trips")]
     public class TripsController : ControllerBase
     {
+        private readonly ApplicationContext _appCtx;
         private readonly ILogger<TripsController> _logger;
         private readonly TripsService _service;
-        private readonly ApplicationContext _appCtx;
+        private readonly TripsQueryService _tripsQueryService;
 
-        public TripsController(ILogger<TripsController> logger, ApplicationContext appCtx, TripsService service)
+        public TripsController(ILogger<TripsController> logger, ApplicationContext appCtx, TripsService service,
+            TripsQueryService tripsQueryService)
         {
             _logger = logger;
             _appCtx = appCtx;
             _service = service;
+            _tripsQueryService = tripsQueryService;
         }
 
         [HttpGet]
-        public ActionResult<PagedResult<Trip>> Get([FromQuery(Name = "skip")] int skip = 0, [FromQuery(Name = "take")] int take = 15)
+        public async Task<ActionResult<PagedResult<Trip>>> Get(
+            [FromQuery(Name = "skip")] int skip = 0,
+            [FromQuery(Name = "take")] int take = 15
+        )
         {
-            return new OkObjectResult(new PagedResult<Trip>(take, skip, _appCtx.Trips.OrderBy(k => k.CustomerId).Skip(skip).Take(take).ToList()));
+            DateTime? from = GetDateFromQuery("from"), to = GetDateFromQuery("to");
+
+            return new OkObjectResult(
+                new PagedResult<Trip>(
+                    take,
+                    skip,
+                    await _tripsQueryService.GetTripsWithinDateRange(from, to)
+                        .OrderBy(k => k.CustomerId)
+                        .Skip(skip)
+                        .Take(take)
+                        .Include(t => t.Customer)
+                        .ToListAsync()
+                )
+            );
         }
 
-        [HttpGet]
-        [Route("customer/{customerId}")]
+        [HttpGet("summary")]
+        public async Task<ActionResult<TripSummary>> GetSummary()
+        {
+            DateTime? from = GetDateFromQuery("from"), to = GetDateFromQuery("to");
+
+            return new OkObjectResult(await _tripsQueryService.GetSummary(from, to));
+        }
+
+
+        [HttpGet("customer/{customerId:int}")]
         public async Task<ActionResult<PagedResult<Trip>>> GetFromCustomer(
             [FromRoute(Name = "customerId")] int customerId,
             [FromQuery(Name = "skip")] int skip = 0,
-            [FromQuery(Name = "take")] int take = 15,
-            [FromQuery(Name = "fromMonth")] string fromMonth = "",
-            [FromQuery(Name = "toMonth")] string toMonth = ""
+            [FromQuery(Name = "take")] int take = 15
         )
         {
-            int startYear = 0, startMonth = 0, endYear = 0, endMonth = 0;
-            bool hasStartYear = false, hasStartMonth = false, hasEndYear = false, hasEndMonth = false;
+            if (!await _appCtx.Customers.Where(c => c.Id == customerId).AnyAsync()) return new NotFoundResult();
 
-            var start = fromMonth.Split('/');
-            if (start.Length >= 2)
-            {
-                hasStartYear = int.TryParse(start[0], out startYear);
-                hasStartMonth = int.TryParse(start[1], out startMonth);
-            }
-            var end = toMonth.Split('/');
-            if (end.Length >= 2)
-            {
+            DateTime? from = GetDateFromQuery("from"), to = GetDateFromQuery("to");
 
-                hasEndYear = int.TryParse(end[0], out endYear);
-                hasEndMonth = int.TryParse(end[1], out endMonth);
-            }
+            var trips = await _tripsQueryService.GetTripsFromCustomer(customerId, from, to).Skip(skip)
+                .Take(take)
+                .ToListAsync();
 
-            var now = DateTime.UtcNow;
-
-            startYear = hasStartYear ? startYear : now.Year;
-            startMonth = hasStartMonth ? startMonth : now.Month;
-            endYear = hasEndYear ? endYear : now.Year;
-            endMonth = hasEndMonth ? endMonth : now.Month;
-
-            var startPeriod = new DateTime(startYear, startMonth, 1);
-            var endPeriod = new DateTime(endYear, endMonth, DateTime.DaysInMonth(endYear, endMonth));
-
-            var trips = await _appCtx.Trips.Where(t => t.CustomerId == customerId && startPeriod <= t.Date && t.Date <= endPeriod).OrderByDescending(t => t.Date).Skip(skip).Take(take).ToListAsync();
             return new OkObjectResult(new PagedResult<Trip>(take, skip, trips));
+        }
+
+        [HttpGet]
+        [Route("customer/{customerId:int}/summary")]
+        public async Task<ActionResult> GetSummaryFromCustomer(
+            [FromRoute(Name = "customerId")] int customerId,
+            [FromQuery(Name = "skip")] int skip = 0,
+            [FromQuery(Name = "take")] int take = 15
+        )
+        {
+            if (!await _appCtx.Customers.Where(c => c.Id == customerId).AnyAsync()) return new NotFoundResult();
+
+            DateTime? from = GetDateFromQuery("from"), to = GetDateFromQuery("to");
+            if (from == null || to == null) return new BadRequestResult();
+
+            return new OkObjectResult(await _tripsQueryService.GetSummaryFromCustomer(customerId, from, to));
         }
 
 
@@ -98,12 +120,12 @@ namespace drv_next_api.Controllers
         }
 
         [HttpDelete]
-        [Route("{tripId}")]
+        [Route("{tripId:int}")]
         public async Task<ActionResult> Delete([FromRoute(Name = "tripId")] int tripId)
         {
             try
             {
-                await _service.DeleteTrip(new DeleteTripDto { TripId = tripId });
+                await _service.DeleteTrip(new DeleteTripDto {TripId = tripId});
                 return new OkResult();
             }
             catch (ServiceValidationException ex)
@@ -114,6 +136,13 @@ namespace drv_next_api.Controllers
             {
                 return new NotFoundResult();
             }
+        }
+
+        private DateTime? GetDateFromQuery(string key)
+        {
+            var dateString = HttpContext.Request.Query[key].ToString();
+            if (dateString == null) return null;
+            return DateTime.TryParse(dateString, out var date) ? date : null;
         }
     }
 }

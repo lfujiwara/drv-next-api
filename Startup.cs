@@ -1,25 +1,20 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using drv_next_api.Data;
-using drv_next_api.Services.Customers;
+using drv_next_api.QueryServices.Trips;
 using drv_next_api.Services;
+using drv_next_api.Services.Customers;
 using drv_next_api.Services.Trips;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
+using Microsoft.OpenApi.Models;
 
 namespace drv_next_api
 {
@@ -39,16 +34,18 @@ namespace drv_next_api
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "drv_next_api", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = "drv_next_api", Version = "v1"});
             });
             services.AddDbContext<ApplicationContext>(opts =>
             {
-                opts.UseSqlServer(Configuration.GetValue<string>("ASPNETCORE_CONNECTION_STRING") ?? Environment.GetEnvironmentVariable("ASPNETCORE_CONNECTION_STRING"));
+                opts.UseSqlServer(Configuration.GetValue<string>("ASPNETCORE_CONNECTION_STRING") ??
+                                  Environment.GetEnvironmentVariable("ASPNETCORE_CONNECTION_STRING"));
                 // opts.UseInMemoryDatabase("Default");
             });
             services.AddTransient<ApplicationContext>();
             services.AddTransient<CustomersService>();
             services.AddTransient<TripsService>();
+            services.AddTransient<TripsQueryService>();
 
             services.AddAuthentication(options =>
             {
@@ -82,18 +79,16 @@ namespace drv_next_api
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "drv_next_api v1"));
             }
 
-            // app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseRouting();
-            app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS")).AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
+            app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS"))
+                .AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
 
             app.UseAuthentication();
-            // app.UseAuthorization();
+            app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }

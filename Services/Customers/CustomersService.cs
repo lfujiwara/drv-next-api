@@ -74,5 +74,10 @@ namespace drv_next_api.Services.Customers
 
             await _ctx.SaveChangesAsync();
         }
+
+        public Task<bool> VerifyPhoneNumber(string phoneNumber)
+        {
+            return _ctx.Customers.Where(c => c.PhoneNumber == phoneNumber).AnyAsync();
+        }
     }
 }
