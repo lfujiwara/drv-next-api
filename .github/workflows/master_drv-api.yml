@@ -20,6 +20,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.x'
+        include-prerelease: true
 
     - name: Build with dotnet
       run: dotnet build --configuration Release
@@ -52,5 +53,5 @@ jobs:
       with:
         app-name: 'drv-api'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_9bdcf755a72f4f659f8391743b008b6d }}
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_961f6164908e4a0e82362376850a8522 }}
         package: .
