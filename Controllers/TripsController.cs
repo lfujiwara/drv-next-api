@@ -64,6 +64,14 @@ namespace drv_next_api.Controllers
 
             return new OkObjectResult(await _tripsQueryService.GetSummary(from, to));
         }
+        
+        [HttpGet("multi-summary")]
+        public async Task<ActionResult<TripSummary>> GetMultiSummary()
+        {
+            DateTime? from = GetDateFromQuery("from"), to = GetDateFromQuery("to");
+
+            return new OkObjectResult(await _tripsQueryService.GetMultiTripSummary(from, to));
+        }
 
 
         [HttpGet("customer/{customerId:int}")]
@@ -99,6 +107,22 @@ namespace drv_next_api.Controllers
 
             return new OkObjectResult(await _tripsQueryService.GetSummaryFromCustomer(customerId, from, to));
         }
+        
+        [HttpGet]
+        [Route("customer/{customerId:int}/multi-summary")]
+        public async Task<ActionResult<MultiTripSummary>> GetMultiSummaryFromCustomer(
+            [FromRoute(Name = "customerId")] int customerId,
+            [FromQuery(Name = "skip")] int skip = 0,
+            [FromQuery(Name = "take")] int take = 15
+        )
+        {
+            if (!await _appCtx.Customers.Where(c => c.Id == customerId).AnyAsync()) return new NotFoundResult();
+
+            DateTime? from = GetDateFromQuery("from"), to = GetDateFromQuery("to");
+            if (from == null || to == null) return new BadRequestResult();
+
+            return new OkObjectResult(await _tripsQueryService.GetMultiTripSummaryFromCustomer(customerId, from, to));
+        }
 
 
         [HttpPost]
@@ -131,6 +155,34 @@ namespace drv_next_api.Controllers
             catch (ServiceValidationException ex)
             {
                 return new BadRequestObjectResult(ex.result);
+            }
+            catch (TripNotFoundException)
+            {
+                return new NotFoundResult();
+            }
+        }
+        
+        [HttpPut]
+        [Route("{tripId:int}/pay")]
+        public async Task<ActionResult<Trip>> Pay([FromRoute(Name = "tripId")] int tripId)
+        {
+            try
+            {
+                return new OkObjectResult(await _service.PayTrip(tripId));
+            }
+            catch (TripNotFoundException)
+            {
+                return new NotFoundResult();
+            }
+        }
+        
+        [HttpPut]
+        [Route("{tripId:int}/unpay")]
+        public async Task<ActionResult<Trip>> Unpay([FromRoute(Name = "tripId")] int tripId)
+        {
+            try
+            {
+                return new OkObjectResult(await _service.UnPayTrip(tripId));
             }
             catch (TripNotFoundException)
             {

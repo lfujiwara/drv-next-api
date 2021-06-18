@@ -60,5 +60,29 @@ namespace drv_next_api.QueryServices.Trips
         {
             return GetSummary(GetTripsFromCustomer(customerId, from, to));
         }
+        
+        public Task<MultiTripSummary> GetMultiTripSummaryFromCustomer(int customerId, DateTime? from = null, DateTime? to = null)
+        {
+            return GetMultiTripSummary(GetTripsFromCustomer(customerId, from, to));
+        }
+        
+        public Task<MultiTripSummary> GetMultiTripSummary(DateTime? from = null, DateTime? to = null)
+        {
+            return GetMultiTripSummary(GetTripsWithinDateRange(from, to));
+        }
+
+        public async Task<MultiTripSummary> GetMultiTripSummary(IQueryable<Trip> queryable)
+        {
+            var total = queryable;
+            var paid = queryable.Where(t => t.Paid != null);
+            var unpaid = queryable.Where(t => t.Paid == null);
+
+            return new MultiTripSummary
+            {
+                Total = await GetSummary(total),
+                Paid = await GetSummary(paid),
+                Unpaid = await GetSummary(unpaid)
+            };
+        }
     }
 }

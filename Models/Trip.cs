@@ -13,5 +13,18 @@ namespace drv_next_api.Models
         public Int64 Distance { get; private set; }
         public Int64 Fare { get; private set; }
         public string Obs { get; private set; }
+        public DateTime? Paid { get; private set; }
+
+        public bool IsPaid() => Paid != null;
+        
+        public void Pay()
+        {
+            Paid = DateTime.UtcNow;
+        }
+
+        public void UnPay()
+        {
+            Paid = null;
+        }
     }
 }

@@ -88,7 +88,7 @@ namespace drv_next_api
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "drv_next_api v1"));
             }
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseRouting();
 
@@ -96,8 +96,8 @@ namespace drv_next_api
                 app.UseCors(builder => builder.WithOrigins(Environment.GetEnvironmentVariable("ASPNETCORE_CORS"))
                     .AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed(p => true));
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            // app.UseAuthentication();
+            // app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
