@@ -123,6 +123,17 @@ namespace drv_next_api.Controllers
 
             return new OkObjectResult(await _tripsQueryService.GetMultiTripSummaryFromCustomer(customerId, from, to));
         }
+        
+        [HttpGet]
+        [Route("customer/{customerId:int}/pending-summary")]
+        public async Task<ActionResult<CustomerPendingSummary>> GetCustomerPendingSummary(
+            [FromRoute(Name = "customerId")] int customerId
+        )
+        {
+            if (!await _appCtx.Customers.Where(c => c.Id == customerId).AnyAsync()) return new NotFoundResult();
+            
+            return new OkObjectResult(await _tripsQueryService.GetCustomerPendingSummary(customerId));
+        }
 
 
         [HttpPost]

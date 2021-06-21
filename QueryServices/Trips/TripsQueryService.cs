@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using drv_next_api.Data;
@@ -83,6 +84,34 @@ namespace drv_next_api.QueryServices.Trips
                 Paid = await GetSummary(paid),
                 Unpaid = await GetSummary(unpaid)
             };
+        }
+
+        public async Task<CustomerPendingSummary> GetCustomerPendingSummary(int customerId)
+        {
+            var trips =  GetTripsFromCustomer(customerId).Where(t => t.Paid == null).OrderBy(t => t.Date);
+            var count = await trips.CountAsync();
+
+            var monthsWithPendingTrips = new HashSet<string>();
+            foreach (var trip in trips)
+            {
+                var year = trip.Date.Year.ToString("0000");
+                var month = trip.Date.Month.ToString("00");
+                monthsWithPendingTrips.Add(year + '-' + month);
+            }
+
+            var earliestTrip = await trips.FirstOrDefaultAsync();
+            var from = earliestTrip?.Date;
+            var total = await trips.SumAsync(t => t.Fare);
+
+            var result = new CustomerPendingSummary
+            {
+                Count = count,
+                From = from,
+                Total = total,
+                MonthsWithPendingTrips = monthsWithPendingTrips.ToList()
+            };
+
+            return result;
         }
     }
 }
